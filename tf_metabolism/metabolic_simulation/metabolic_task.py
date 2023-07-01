@@ -60,7 +60,7 @@ def evaluate_metabolic_task(cobra_model, metabolic_task_file, task_constraints={
             each_reaction.lower_bound = 0.0
             each_reaction.upper_bound = 1000.0
 
-    task_id_list = task_info.keys()
+    task_id_list = list(task_info.keys())
     task_id_list.sort()
 
     for task_id in task_id_list:

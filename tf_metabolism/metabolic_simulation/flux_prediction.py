@@ -12,26 +12,7 @@ from tf_metabolism.omics_integration import omics_score_calculation
 from tf_metabolism.omics_integration import LAD
 
 
-def parse_getpra_information(getpra_file):
-    getrpa_sl_info = {}
-    fp = open(getpra_file, 'r')
-    fp.readline()
-    for line in fp:
-        sptlist = line.strip().split('\t')
-        ucsc_id = sptlist[4].strip()
-        compartment = sptlist[8].strip()
-
-        if ucsc_id not in getrpa_sl_info:
-            getrpa_sl_info[ucsc_id] = [compartment]
-        else:
-            getrpa_sl_info[ucsc_id].append(compartment)
-
-    fp.close()
-
-    return getrpa_sl_info
-
-
-def calculate_reaction_score(cobra_model, expression_score, getrpa_sl_info, use_getpra_filtering=False):
+def calculate_reaction_score(cobra_model, expression_score):
     expression_socre_string = {}
     for gene_id in expression_score:
         expression_socre_string[str(gene_id)] = expression_score[gene_id]
@@ -46,13 +27,6 @@ def calculate_reaction_score(cobra_model, expression_score, getrpa_sl_info, use_
         GPR_association = each_reaction.gene_reaction_rule
         genes = [gene.id for gene in each_reaction.genes]
         genes = list(set(genes) & set(temp_expression_socre_string.keys()))
-
-        if use_getpra_filtering:
-            for each_gene in genes:
-                if each_gene in getrpa_sl_info:
-                    getpra_compartments = getrpa_sl_info[each_gene]
-                    if len(set(getpra_compartments) & set(compartments)) == 0:
-                        temp_expression_socre_string[each_gene] = 0.0
 
         if len(genes) > 1:
             GPR_list = GPR_manipulation.convert_string_GPR_to_list_GPR(GPR_association)
@@ -78,8 +52,7 @@ def read_expressoin_data(omics_file, delimiter=','):
             expression_score[isoform_id] = expression_level
     return expression_score
 
-def calculate_flux(output_dir, omics_file, getpra_file, use_getpra, generic_cobra_model_file, context_specific_cobra_model_file, minimum_biomass=0.01):    
-    getrpa_sl_info = parse_getpra_information(getpra_file)
+def calculate_flux(output_dir, omics_file, generic_cobra_model_file, context_specific_cobra_model_file, minimum_biomass=0.01):    
     cobra_model = read_sbml_model(generic_cobra_model_file)
     cobra_isoforms = [isoform.id for isoform in cobra_model.genes]
 
@@ -87,10 +60,8 @@ def calculate_flux(output_dir, omics_file, getpra_file, use_getpra, generic_cobr
     expression_score = read_expressoin_data(omics_file)
 
     reaction_weight_info = {}
-    if use_getpra == True:
-        reaction_weights = calculate_reaction_score(cobra_model, expression_score, getrpa_sl_info, True)
-    else:
-        reaction_weights = calculate_reaction_score(cobra_model, expression_score, getrpa_sl_info, False)
+    
+    reaction_weights = calculate_reaction_score(cobra_model, expression_score)
 
     reaction_weight_info[basename] = reaction_weights
 
@@ -113,7 +84,7 @@ def calculate_flux(output_dir, omics_file, getpra_file, use_getpra, generic_cobr
     
     with open(output_dir + '/Flux_prediction_%s.csv' % (basename), 'w') as fp:
         for each_reaction in predicted_flux:
-            print >>fp, '%s,%s'%(each_reaction, predicted_flux[each_reaction])
+            fp.write('%s,%s\n'%(each_reaction, predicted_flux[each_reaction]))
     return predicted_flux
 
 def main():
