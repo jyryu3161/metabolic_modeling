@@ -1,0 +1,1 @@
+python3 tf_metabolism.py -o output -c1 ./input_data/sample1.csv -c2 ./input_data/sample2.csv
