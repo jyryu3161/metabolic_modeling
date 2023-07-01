@@ -205,8 +205,8 @@ def main():
     comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
     
 #     ## Reconstruct GEMs
-    #reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
-    #reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
     
     ## Predict metabolix fluxes using each condition specific GEM
     output_dir_f1 = '%s/flux1'%(output_dir)
