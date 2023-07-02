@@ -204,7 +204,7 @@ def main():
     comparison_result_df = statistical_comparison.two_grouped_data_comparison(omics1_df, omics2_df, related_sample_flag, 0.05)
     comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
     
-#     ## Reconstruct GEMs
+# Reconstruct GEMs
     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
     
@@ -214,7 +214,7 @@ def main():
     predict_metabolic_fluxes(output_dir, output_dir_f1, output_dir_c1, generic_model_file)
     predict_metabolic_fluxes(output_dir, output_dir_f2, output_dir_c2, generic_model_file)
     
-    ## Statistical analysis of metabolic flux
+    # ## Statistical analysis of metabolic flux
     flux_file1 = '%s/flux1.csv'%(output_dir)
     flux_file2 = '%s/flux2.csv'%(output_dir)
     flux1_df = pd.read_csv(flux_file1, index_col=0)
@@ -222,11 +222,8 @@ def main():
     comparison_result_df = statistical_comparison.two_grouped_data_comparison(flux1_df, flux2_df, related_sample_flag, 0.05)
     comparison_result_df.to_csv(output_dir+'/Differentially_changed_fluxes.csv')
     
-    ## Perform enrichment analysis for metabolic pathways
-    #predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
-    
-    ## Perform enrichment analysis for transcription factors
-    #predict_enriched_transcription_factors(transcript_id_info, trrust, cobra_model, output_dir)
+    # Perform enrichment analysis for metabolic pathways
+    predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
     
     ## Calculate flux_sum
     result = flux_sum.calculate_flux_sum(cobra_model, flux_file1, flux_file2, related=related_sample_flag, p_value_cutoff=0.05)
