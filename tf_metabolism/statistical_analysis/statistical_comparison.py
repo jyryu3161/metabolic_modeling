@@ -35,7 +35,8 @@ def two_grouped_data_comparison(condition1_df, condition2_df, related=False, p_v
 
     method='Wilcoxon rank-sum test'
     target_function = ranksums
-
+    # target_function = ttest_ind
+    
     # Statistical comparison
     result_df_dict = {}
     result_df_columns = ['Condition1 mean','Condition1 std','Condition2 mean','Condition2 std','Method','P','log2 (condition2/condition1)','Status']
