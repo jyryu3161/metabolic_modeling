@@ -127,7 +127,6 @@ def sort_index(input_df, by, method, value=False):
             else:
                 failed.append(i)
         sorted_index_list = passed+failed
-
     elif method == 'abs_order':
         input_dict = input_df.to_dict()
         target_dict = input_dict[by]
@@ -161,6 +160,7 @@ def calculate_flux_sum(cobra_model, flux_file1, flux_file2,
                         p_value_cutoff=p_value_cutoff,
                         filter_by=filter_by,
                         show_missing_data=show_missing_data)
+    return stat_df
 
     # Sorting-fdr passed -> log2
     sorted_index1 = sort_index(input_df=stat_df, by='log2 (condition2/condition1)', method='abs_order', value=False)
