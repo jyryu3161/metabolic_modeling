@@ -46,6 +46,7 @@ def pathway_enrichment_analysis(cobra_model, selected_reactions):
         pathway_enrichment_result_info[pathway] = {}
         pathway_enrichment_result_info[pathway]['FDR corrected P'] = p_value_corrected[i]
         pathway_enrichment_result_info[pathway]['P'] = p_value_list[i]
+        pathway_enrichment_result_info[pathway]['ODDS RATIO'] = odd_ratio_list[i]
         pathway_enrichment_result_info[pathway]['No. of selected reactions in pathway'] = data_information[pathway][
             'No. of selected reactions in pathway']
         pathway_enrichment_result_info[pathway]['No. of all reactions in pathway'] = data_information[pathway][
