@@ -45,4 +45,5 @@ dependencies:
       - swiglpk==5.0.8
       - sympy==1.9
       - tabulate==0.8.10
+      - seaborn==0.11.2
 prefix: /home/jyryu/anaconda3/envs/gems
