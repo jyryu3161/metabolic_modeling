@@ -404,80 +404,80 @@ def main():
     if not os.path.isdir(targeting_result_dir):
         os.mkdir(targeting_result_dir)
         
-#     ## Load data    
-#     metabolic_task_file = pkg_resources.resource_filename('tf_metabolism', 'data/MetabolicTasks.csv')
-#     medium_file = pkg_resources.resource_filename('tf_metabolism', 'data/RPMI1640_medium.txt')
-#     present_metabolite_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_metabolites.txt')
-#     essential_reaction_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_reactions.txt')
-#     trrust = pkg_resources.resource_filename('tf_metabolism', 'data/TRRUST_v2_ensembl.tsv')
+    ## Load data    
+    metabolic_task_file = pkg_resources.resource_filename('tf_metabolism', 'data/MetabolicTasks.csv')
+    medium_file = pkg_resources.resource_filename('tf_metabolism', 'data/RPMI1640_medium.txt')
+    present_metabolite_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_metabolites.txt')
+    essential_reaction_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_reactions.txt')
+    trrust = pkg_resources.resource_filename('tf_metabolism', 'data/TRRUST_v2_ensembl.tsv')
     
-#     # Check omics data format and choose proper metabolic model
-#     generic_model_file_name = utils.check_input_file_format(omics_file1, omics_file2)
-#     generic_model_file_name = pkg_resources.resource_filename('tf_metabolism', 'data/Recon2M.2_Entrez_Gene.xml')
-#     generic_model_file = generic_model_file_name
-#     universal_model_file = generic_model_file_name
+    # Check omics data format and choose proper metabolic model
+    generic_model_file_name = utils.check_input_file_format(omics_file1, omics_file2)
+    generic_model_file_name = pkg_resources.resource_filename('tf_metabolism', 'data/Recon2M.2_Entrez_Gene.xml')
+    generic_model_file = generic_model_file_name
+    universal_model_file = generic_model_file_name
     
-#     biomass_reaction = 'biomass_reaction'
-#     cobra_model = read_sbml_model(generic_model_file)
+    biomass_reaction = 'biomass_reaction'
+    cobra_model = read_sbml_model(generic_model_file)
     
-#     # Find differentially expressed genes or transcripts
-#     omics1_df = pd.read_csv(omics_file1, index_col=0)
-#     omics2_df = pd.read_csv(omics_file2, index_col=0)
+    # Find differentially expressed genes or transcripts
+    omics1_df = pd.read_csv(omics_file1, index_col=0)
+    omics2_df = pd.read_csv(omics_file2, index_col=0)
     
-#     generic_cobra_model = read_sbml_model(generic_model_file)
-#     taget_genes = []
-#     for each_gene in generic_cobra_model.genes:
-#         taget_genes.append(int(each_gene.id))
+    generic_cobra_model = read_sbml_model(generic_model_file)
+    taget_genes = []
+    for each_gene in generic_cobra_model.genes:
+        taget_genes.append(int(each_gene.id))
     
-#     taget_genes = list(set(taget_genes)&set(omics1_df.index))
+    taget_genes = list(set(taget_genes)&set(omics1_df.index))
     
-#     omics1_df = omics1_df.loc[taget_genes]
-#     omics2_df = omics2_df.loc[taget_genes]
+    omics1_df = omics1_df.loc[taget_genes]
+    omics2_df = omics2_df.loc[taget_genes]
     
-#     target_genes_list1 = []
-#     target_genes_list2 = []
+    target_genes_list1 = []
+    target_genes_list2 = []
     
-#     for each_row, each_df in omics1_df.iterrows():
-#         min_exp = np.min(np.abs(each_df.values))
-#         if min_exp >= 0.5:
-#             target_genes_list1.append(int(each_row))
+    for each_row, each_df in omics1_df.iterrows():
+        min_exp = np.min(np.abs(each_df.values))
+        if min_exp >= 0.5:
+            target_genes_list1.append(int(each_row))
             
-#     for each_row, each_df in omics2_df.iterrows():
-#         min_exp = np.min(np.abs(each_df.values))
-#         if min_exp >= 0.5:
-#             target_genes_list2.append(int(each_row))
+    for each_row, each_df in omics2_df.iterrows():
+        min_exp = np.min(np.abs(each_df.values))
+        if min_exp >= 0.5:
+            target_genes_list2.append(int(each_row))
     
-#     target_genes2 = list(set(target_genes_list1) & set(target_genes_list2))
-#     omics1_df_tmp = omics1_df.loc[target_genes2]
-#     omics2_df_tmp = omics2_df.loc[target_genes2]
+    target_genes2 = list(set(target_genes_list1) & set(target_genes_list2))
+    omics1_df_tmp = omics1_df.loc[target_genes2]
+    omics2_df_tmp = omics2_df.loc[target_genes2]
 
-#     comparison_result_df = statistical_comparison.two_grouped_data_comparison(omics1_df_tmp, omics2_df_tmp, related_sample_flag, 0.05)
-#     comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
+    comparison_result_df = statistical_comparison.two_grouped_data_comparison(omics1_df_tmp, omics2_df_tmp, related_sample_flag, 0.05)
+    comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
     
-# # Reconstruct GEMs
-#     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
-#     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+# Reconstruct GEMs
+    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
     
-#     ## Predict metabolix fluxes using each condition specific GEM
-#     output_dir_f1 = '%s/flux1'%(output_dir)
-#     output_dir_f2 = '%s/flux2'%(output_dir)
-#     predict_metabolic_fluxes(output_dir, output_dir_f1, output_dir_c1, generic_model_file)
-#     predict_metabolic_fluxes(output_dir, output_dir_f2, output_dir_c2, generic_model_file)
+    ## Predict metabolix fluxes using each condition specific GEM
+    output_dir_f1 = '%s/flux1'%(output_dir)
+    output_dir_f2 = '%s/flux2'%(output_dir)
+    predict_metabolic_fluxes(output_dir, output_dir_f1, output_dir_c1, generic_model_file)
+    predict_metabolic_fluxes(output_dir, output_dir_f2, output_dir_c2, generic_model_file)
     
-#     # ## Statistical analysis of metabolic flux
-#     flux_file1 = '%s/flux1.csv'%(output_dir)
-#     flux_file2 = '%s/flux2.csv'%(output_dir)
-#     flux1_df = pd.read_csv(flux_file1, index_col=0)
-#     flux2_df = pd.read_csv(flux_file2, index_col=0)
-#     comparison_result_df = statistical_comparison.two_grouped_data_comparison(flux1_df, flux2_df, related_sample_flag, 0.05)
-#     comparison_result_df.to_csv(output_dir+'/Differentially_changed_fluxes.csv')
+    # ## Statistical analysis of metabolic flux
+    flux_file1 = '%s/flux1.csv'%(output_dir)
+    flux_file2 = '%s/flux2.csv'%(output_dir)
+    flux1_df = pd.read_csv(flux_file1, index_col=0)
+    flux2_df = pd.read_csv(flux_file2, index_col=0)
+    comparison_result_df = statistical_comparison.two_grouped_data_comparison(flux1_df, flux2_df, related_sample_flag, 0.05)
+    comparison_result_df.to_csv(output_dir+'/Differentially_changed_fluxes.csv')
     
-#     # Perform enrichment analysis for metabolic pathways
-#     predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
+    # Perform enrichment analysis for metabolic pathways
+    predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
     
-#     ## Calculate flux_sum
-#     result = flux_sum.calculate_flux_sum(cobra_model, flux_file1, flux_file2, related=related_sample_flag, p_value_cutoff=0.05)
-#     result.to_csv('%s/flux_sum_results.csv'%(output_dir))
+    ## Calculate flux_sum
+    result = flux_sum.calculate_flux_sum(cobra_model, flux_file1, flux_file2, related=related_sample_flag, p_value_cutoff=0.05)
+    result.to_csv('%s/flux_sum_results.csv'%(output_dir))
     
     run_targeting_simulation(output_dir, targeting_result_dir)
     vizualize_targeting_results(output_dir, output_viz_dir)
