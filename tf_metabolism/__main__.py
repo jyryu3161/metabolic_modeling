@@ -196,7 +196,7 @@ def run_targeting_simulation(output_dir, targeting_result_dir):
         output_df.to_csv(targeting_result_dir+'/MOMA_target_results_%s.csv'%(basename))
     return
 
-def vizualize_targeting_results(output_dir, output_viz_dir):
+def visualize_targeting_results(output_dir, output_viz_dir):
     de_df = pd.read_csv(output_dir+'/Differentially_changed_fluxes.csv', index_col=0)
     de_df = de_df[de_df['P']<0.1]
     target_reactions = de_df.index
@@ -275,7 +275,7 @@ def vizualize_targeting_results(output_dir, output_viz_dir):
         
         plt.scatter(umap_result[labels == 0, 0], umap_result[labels == 0, 1], color='skyblue', label='Control', alpha=0.5)
         
-        plt.scatter(center_x, center_y, color='skyblue', label='Center (control)')
+        plt.scatter(center_x, center_y, color='green', label='Center (control)')
         plt.scatter(tmp_result[:, 0], tmp_result[:, 1], color='gray', alpha=0.05, label='Predicted flux')
         plt.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, label='Top 5 target genes', s=50)
         
@@ -296,7 +296,7 @@ def vizualize_targeting_results(output_dir, output_viz_dir):
     fp.close()
     return
 
-def vizualize_other_results(output_dir, output_viz_dir):
+def visualize_other_results(output_dir, output_viz_dir):
     import pandas as pd
     import matplotlib.pyplot as plt
     import numpy as np
@@ -480,8 +480,8 @@ def main():
     result.to_csv('%s/flux_sum_results.csv'%(output_dir))
     
     run_targeting_simulation(output_dir, targeting_result_dir)
-    vizualize_targeting_results(output_dir, output_viz_dir)
-    vizualize_other_results(output_dir, output_viz_dir)
+    visualize_targeting_results(output_dir, output_viz_dir)
+    visualize_other_results(output_dir, output_viz_dir)
     
     logging.info(time.strftime("Elapsed time %H:%M:%S", time.gmtime(time.time() - start)))
     
