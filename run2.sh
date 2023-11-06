@@ -1,2 +1,0 @@
-python3 tf_metabolism.py -o output_aging_old -c1 ./input_data/young_group_rnaseq.csv -c2 ./input_data/old_age.csv
-python3 tf_metabolism.py -o output_aging_mid -c1 ./input_data/young_group_rnaseq.csv -c2 ./input_data/mid_group_rnaseq.csv

@@ -28,6 +28,8 @@ from tf_metabolism import __version__
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from adjustText import adjust_text
+
 def reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir, omics_file, present_metabolite_file, essential_reaction_file, metabolic_task_file):
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
@@ -209,30 +211,31 @@ def visualize_targeting_results(output_dir, output_viz_dir):
     df2 = pd.read_csv(file_path_2, index_col=0)
     
     # Merge the two dataframes
+    df1 = df1.loc[target_reactions]
+    df2 = df2.loc[target_reactions]
+    
     merged_df = pd.merge(df1, df2, left_index=True, right_index=True)
-    merged_df = merged_df.loc[target_reactions]
-    
-    # Drop rows with NaN values
-    cleaned_df = merged_df.dropna()
-    
-    # Extract the 'C' and 'H' columns
-    c_cols = [col for col in cleaned_df.columns]
-    t_cols = [col for col in cleaned_df.columns]
-    
-    c_data = cleaned_df[c_cols].T.values
-    t_data = cleaned_df[t_cols].T.values
 
+    # Extract the 'C' and 'H' columns
+    c_cols = [col for col in df1.columns]
+    t_cols = [col for col in df2.columns]
+    
+    c_data = merged_df[c_cols].T#.values
+    t_data = merged_df[t_cols].T#.values
+    merged_df = merged_df.T
+    
     # Combine the 'C' and 'H' data
     combined_data = np.concatenate((c_data, t_data), axis=0)
-
-    # Create labels: 0 for 'C' data, 1 for 'H' data
     labels = np.concatenate((np.zeros(c_data.shape[0]), np.ones(t_data.shape[0])))
     
     # Use UMAP to reduce dimensionality
     umap_model = umap.UMAP()
-    umap_model.fit(combined_data)
-    umap_result = umap_model.transform(combined_data)
-
+    umap_model.fit(merged_df)
+    umap_result = umap_model.transform(merged_df)
+    umap_result_df = pd.DataFrame(umap_result, index=merged_df.index)
+    umap_result_df['label'] = labels
+    umap_result_df.to_csv(output_viz_dir + '/UMAP_Visualization_raw_data.csv')
+    
     # Plot the results
     plt.figure(figsize=(10, 7))
     plt.scatter(umap_result[labels == 0, 0], umap_result[labels == 0, 1], color='skyblue', label='Control', alpha=0.5)
@@ -246,7 +249,7 @@ def visualize_targeting_results(output_dir, output_viz_dir):
     plt.savefig(output_viz_dir + '/UMAP_Visualization.svg', format='svg')
     plt.savefig(output_viz_dir + '/UMAP_Visualization.png', format='png')
     plt.show()
-    
+
     # Save the trained model to a file
     joblib.dump(umap_model, output_viz_dir+'/umap_model.pkl')
     loaded_umap_model = joblib.load(output_viz_dir+'/umap_model.pkl')
@@ -257,42 +260,62 @@ def visualize_targeting_results(output_dir, output_viz_dir):
     
     targeting_result_files = glob.glob(output_dir+'/targeting_results/*.csv')
     fp = open(output_viz_dir+'/target_genes.csv', 'w')
-    fp.write('%s,%s\n'%('Gene', 'Sample'))
+    fp.write('%s,%s\n' % ('Gene', 'Sample'))
+
+    targeting_result_files = glob.glob(output_dir+'/targeting_results/*.csv')
+    fp = open(output_viz_dir+'/target_genes.csv', 'w')
+    fp.write('%s,%s\n' % ('Gene', 'Sample'))
+
+    texts = []  # Initialize a list to hold the text objects for adjust_text
+
     for each_result in targeting_result_files:
         basename = os.path.basename(each_result).split('.')[0].strip()
         df2 = pd.read_csv(each_result, index_col=0)
         df2 = df2.loc[target_reactions].T
         umap_result_sim = loaded_umap_model.transform(df2)
-        
+
         tmp_df = df2
         tmp_result = loaded_umap_model.transform(tmp_df)
         tmp_df = pd.DataFrame(tmp_result, columns=['X', 'Y'], index=tmp_df.index)
 
+#         # Save UMAP results to a CSV file
+#         umap_csv_filename = output_viz_dir + '/UMAP_Results_' + basename + '.csv'
+#         tmp_df.to_csv(umap_csv_filename)
+
         distances = np.sqrt((tmp_df['X'] - center_x)**2 + (tmp_df['Y'] - center_y)**2)
         closest_indices = np.argsort(distances)[:5]
 
-        plt.figure(figsize=(10, 6))
-        
-        plt.scatter(umap_result[labels == 0, 0], umap_result[labels == 0, 1], color='skyblue', label='Control', alpha=0.5)
-        
-        plt.scatter(center_x, center_y, color='green', label='Center (control)')
-        plt.scatter(tmp_result[:, 0], tmp_result[:, 1], color='gray', alpha=0.05, label='Predicted flux')
-        plt.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, label='Top 5 target genes', s=50)
-        
-        plt.xlabel('UMAP_1')
-        plt.ylabel('UMAP_2')
-        plt.title('Simulation Results')
-        plt.legend()
-        plt.grid(True)
-        
-        plt.savefig(output_viz_dir + '/UMAP_%s.svg'%(basename), format='svg')
-        plt.savefig(output_viz_dir + '/UMAP_%s.png'%(basename), format='png')
-        
-        plt.show()
-        
+        # 기존 코드는 생략하고 직접적으로 수정이 필요한 부분만 나타냈습니다.
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        ax.scatter(umap_result[labels == 0, 0], umap_result[labels == 0, 1], color='skyblue', label='Control', alpha=0.5)
+
+        ax.scatter(center_x, center_y, color='green', label='Center (control)')
+        ax.scatter(tmp_result[:, 0], tmp_result[:, 1], color='gray', alpha=0.05, label='Predicted flux')
+        ax.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, label='Top 5 target genes', s=50)
+
+        texts = []  # 텍스트 객체를 저장할 리스트를 초기화합니다.
+        for i in closest_indices:
+            texts.append(ax.text(tmp_result[i, 0], tmp_result[i, 1], tmp_df.index[i], fontsize=9))
+
+        ax.set_xlabel('UMAP_1')
+        ax.set_ylabel('UMAP_2')
+        ax.set_title('Simulation Results')
+        ax.legend()
+
+        # 그래프를 저장하기 전에 그림을 그립니다. 이것은 모든 텍스트 객체들이 그림과 연결되어 있음을 보장합니다.
+        plt.draw()
+
+        # adjust_text 함수를 호출할 때, 현재 축(ax) 인자를 전달합니다.
+        adjust_text(texts, ax=ax)
+
+        plt.savefig(output_viz_dir + '/UMAP_%s.svg' % basename, format='svg')
+        plt.savefig(output_viz_dir + '/UMAP_%s.png' % basename, format='png')
+        plt.close(fig)  # 사용이 끝난 후 그림을 닫습니다.
+
         target_genes = tmp_df.index[closest_indices].values
         for gene in target_genes:
-            fp.write('%s,%s\n'%(gene, basename))
+            fp.write('%s,%s\n' % (gene, basename))
     fp.close()
     return
 
@@ -336,7 +359,6 @@ def visualize_other_results(output_dir, output_viz_dir):
     plt.savefig(output_viz_dir + '/Enrich_down_regulated_pathways.png', format='png')
     plt.show()
     
-
     file_path = output_dir+'/condition1/functional_model_information.csv'
     df = pd.read_csv(file_path, index_col=0)
     df = df[['No. of genes', 'No. of metabolites', 'No. of reactions']]
@@ -405,81 +427,81 @@ def main():
         os.mkdir(targeting_result_dir)
         
     ## Load data    
-    metabolic_task_file = pkg_resources.resource_filename('tf_metabolism', 'data/MetabolicTasks.csv')
-    medium_file = pkg_resources.resource_filename('tf_metabolism', 'data/RPMI1640_medium.txt')
-    present_metabolite_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_metabolites.txt')
-    essential_reaction_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_reactions.txt')
-    trrust = pkg_resources.resource_filename('tf_metabolism', 'data/TRRUST_v2_ensembl.tsv')
+#     metabolic_task_file = pkg_resources.resource_filename('tf_metabolism', 'data/MetabolicTasks.csv')
+#     medium_file = pkg_resources.resource_filename('tf_metabolism', 'data/RPMI1640_medium.txt')
+#     present_metabolite_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_metabolites.txt')
+#     essential_reaction_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_reactions.txt')
+#     trrust = pkg_resources.resource_filename('tf_metabolism', 'data/TRRUST_v2_ensembl.tsv')
     
-    # Check omics data format and choose proper metabolic model
-    generic_model_file_name = utils.check_input_file_format(omics_file1, omics_file2)
-    generic_model_file_name = pkg_resources.resource_filename('tf_metabolism', 'data/Recon2M.2_Entrez_Gene.xml')
-    generic_model_file = generic_model_file_name
-    universal_model_file = generic_model_file_name
+#     # Check omics data format and choose proper metabolic model
+#     generic_model_file_name = utils.check_input_file_format(omics_file1, omics_file2)
+#     generic_model_file_name = pkg_resources.resource_filename('tf_metabolism', 'data/Recon2M.2_Entrez_Gene.xml')
+#     generic_model_file = generic_model_file_name
+#     universal_model_file = generic_model_file_name
     
-    biomass_reaction = 'biomass_reaction'
-    cobra_model = read_sbml_model(generic_model_file)
+#     biomass_reaction = 'biomass_reaction'
+#     cobra_model = read_sbml_model(generic_model_file)
     
-    # Find differentially expressed genes or transcripts
-    omics1_df = pd.read_csv(omics_file1, index_col=0)
-    omics2_df = pd.read_csv(omics_file2, index_col=0)
+#     # Find differentially expressed genes or transcripts
+#     omics1_df = pd.read_csv(omics_file1, index_col=0)
+#     omics2_df = pd.read_csv(omics_file2, index_col=0)
     
-    generic_cobra_model = read_sbml_model(generic_model_file)
-    taget_genes = []
-    for each_gene in generic_cobra_model.genes:
-        taget_genes.append(int(each_gene.id))
+#     generic_cobra_model = read_sbml_model(generic_model_file)
+#     taget_genes = []
+#     for each_gene in generic_cobra_model.genes:
+#         taget_genes.append(int(each_gene.id))
     
-    taget_genes = list(set(taget_genes)&set(omics1_df.index))
+#     taget_genes = list(set(taget_genes)&set(omics1_df.index))
     
-    omics1_df = omics1_df.loc[taget_genes]
-    omics2_df = omics2_df.loc[taget_genes]
+#     omics1_df = omics1_df.loc[taget_genes]
+#     omics2_df = omics2_df.loc[taget_genes]
     
-    target_genes_list1 = []
-    target_genes_list2 = []
+#     target_genes_list1 = []
+#     target_genes_list2 = []
     
-    for each_row, each_df in omics1_df.iterrows():
-        min_exp = np.min(np.abs(each_df.values))
-        if min_exp >= 0.5:
-            target_genes_list1.append(int(each_row))
+#     for each_row, each_df in omics1_df.iterrows():
+#         min_exp = np.min(np.abs(each_df.values))
+#         if min_exp >= 0.5:
+#             target_genes_list1.append(int(each_row))
             
-    for each_row, each_df in omics2_df.iterrows():
-        min_exp = np.min(np.abs(each_df.values))
-        if min_exp >= 0.5:
-            target_genes_list2.append(int(each_row))
+#     for each_row, each_df in omics2_df.iterrows():
+#         min_exp = np.min(np.abs(each_df.values))
+#         if min_exp >= 0.5:
+#             target_genes_list2.append(int(each_row))
     
-    target_genes2 = list(set(target_genes_list1) & set(target_genes_list2))
-    omics1_df_tmp = omics1_df.loc[target_genes2]
-    omics2_df_tmp = omics2_df.loc[target_genes2]
+#     target_genes2 = list(set(target_genes_list1) & set(target_genes_list2))
+#     omics1_df_tmp = omics1_df.loc[target_genes2]
+#     omics2_df_tmp = omics2_df.loc[target_genes2]
 
-    comparison_result_df = statistical_comparison.two_grouped_data_comparison(omics1_df_tmp, omics2_df_tmp, related_sample_flag, 0.05)
-    comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
+#     comparison_result_df = statistical_comparison.two_grouped_data_comparison(omics1_df_tmp, omics2_df_tmp, related_sample_flag, 0.05)
+#     comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
     
-# Reconstruct GEMs
-    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
-    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+# # Reconstruct GEMs
+#     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+#     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
     
-    ## Predict metabolix fluxes using each condition specific GEM
-    output_dir_f1 = '%s/flux1'%(output_dir)
-    output_dir_f2 = '%s/flux2'%(output_dir)
-    predict_metabolic_fluxes(output_dir, output_dir_f1, output_dir_c1, generic_model_file)
-    predict_metabolic_fluxes(output_dir, output_dir_f2, output_dir_c2, generic_model_file)
+#     ## Predict metabolix fluxes using each condition specific GEM
+#     output_dir_f1 = '%s/flux1'%(output_dir)
+#     output_dir_f2 = '%s/flux2'%(output_dir)
+#     predict_metabolic_fluxes(output_dir, output_dir_f1, output_dir_c1, generic_model_file)
+#     predict_metabolic_fluxes(output_dir, output_dir_f2, output_dir_c2, generic_model_file)
     
-    # ## Statistical analysis of metabolic flux
-    flux_file1 = '%s/flux1.csv'%(output_dir)
-    flux_file2 = '%s/flux2.csv'%(output_dir)
-    flux1_df = pd.read_csv(flux_file1, index_col=0)
-    flux2_df = pd.read_csv(flux_file2, index_col=0)
-    comparison_result_df = statistical_comparison.two_grouped_data_comparison(flux1_df, flux2_df, related_sample_flag, 0.05)
-    comparison_result_df.to_csv(output_dir+'/Differentially_changed_fluxes.csv')
+#     # ## Statistical analysis of metabolic flux
+#     flux_file1 = '%s/flux1.csv'%(output_dir)
+#     flux_file2 = '%s/flux2.csv'%(output_dir)
+#     flux1_df = pd.read_csv(flux_file1, index_col=0)
+#     flux2_df = pd.read_csv(flux_file2, index_col=0)
+#     comparison_result_df = statistical_comparison.two_grouped_data_comparison(flux1_df, flux2_df, related_sample_flag, 0.05)
+#     comparison_result_df.to_csv(output_dir+'/Differentially_changed_fluxes.csv')
     
-    # Perform enrichment analysis for metabolic pathways
-    predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
+#     # Perform enrichment analysis for metabolic pathways
+#     predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
     
-    ## Calculate flux_sum
-    result = flux_sum.calculate_flux_sum(cobra_model, flux_file1, flux_file2, related=related_sample_flag, p_value_cutoff=0.05)
-    result.to_csv('%s/flux_sum_results.csv'%(output_dir))
+#     ## Calculate flux_sum
+#     result = flux_sum.calculate_flux_sum(cobra_model, flux_file1, flux_file2, related=related_sample_flag, p_value_cutoff=0.05)
+#     result.to_csv('%s/flux_sum_results.csv'%(output_dir))
     
-    run_targeting_simulation(output_dir, targeting_result_dir)
+#     run_targeting_simulation(output_dir, targeting_result_dir)
     visualize_targeting_results(output_dir, output_viz_dir)
     visualize_other_results(output_dir, output_viz_dir)
     

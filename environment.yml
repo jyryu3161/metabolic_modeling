@@ -26,6 +26,7 @@ dependencies:
   - xz=5.4.2=h5eee18b_0
   - zlib=1.2.13=h5eee18b_0
   - pip:
+      - adjusttext==0.6.1
       - cobra==0.5.11
       - future==0.18.3
       - gurobipy==9.1.2
