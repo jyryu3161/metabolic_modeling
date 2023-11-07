@@ -198,10 +198,34 @@ def run_targeting_simulation(output_dir, targeting_result_dir):
         output_df.to_csv(targeting_result_dir+'/MOMA_target_results_%s.csv'%(basename))
     return
 
-def visualize_targeting_results(output_dir, output_viz_dir):
+# 이상치를 찾기 위한 IQR 계산 함수
+def find_outliers_iqr(df):
+    outliers_indices = []
+    for column in df.columns:
+        Q1 = df[column].quantile(0.25)
+        Q3 = df[column].quantile(0.75)
+        IQR = Q3 - Q1
+        outlier_step = 1.5 * IQR
+        outliers_list_col = df[(df[column] < Q1 - outlier_step) | (df[column] > Q3 + outlier_step)].index
+        outliers_indices.extend(outliers_list_col)
+    outliers_indices = list(set(outliers_indices))
+    return outliers_indices
+
+def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
+    model_candidate_reactions = []
+    for each_reaction in cobra_model.reactions:
+        compartments = []
+        for each_met in each_reaction.reactants + each_reaction.products:
+            compartments.append(each_met.compartment)
+        compartments = list(set(compartments))
+        if len(compartments) == 1:
+            model_candidate_reactions.append(each_reaction.id)
+        
     de_df = pd.read_csv(output_dir+'/Differentially_changed_fluxes.csv', index_col=0)
-    de_df = de_df[de_df['P']<0.1]
+    de_df = de_df[de_df['P']<0.05]
+    
     target_reactions = de_df.index
+    target_reactions = list(set(model_candidate_reactions) & set(target_reactions))
     
     # Load the data
     file_path_1 = output_dir+'/flux1.csv'
@@ -215,7 +239,7 @@ def visualize_targeting_results(output_dir, output_viz_dir):
     df2 = df2.loc[target_reactions]
     
     merged_df = pd.merge(df1, df2, left_index=True, right_index=True)
-
+    
     # Extract the 'C' and 'H' columns
     c_cols = [col for col in df1.columns]
     t_cols = [col for col in df2.columns]
@@ -235,6 +259,13 @@ def visualize_targeting_results(output_dir, output_viz_dir):
     umap_result_df = pd.DataFrame(umap_result, index=merged_df.index)
     umap_result_df['label'] = labels
     umap_result_df.to_csv(output_viz_dir + '/UMAP_Visualization_raw_data.csv')
+    
+    label_0_data = umap_result_df[umap_result_df['label'] == 0]
+    outliers_indices_label_0 = find_outliers_iqr(label_0_data.iloc[:, 1:3])
+    outliers_data_label_0 = label_0_data.loc[outliers_indices_label_0]
+    non_outliers_data_label_0 = label_0_data.drop(outliers_indices_label_0)
+#     center_x = non_outliers_data_label_0.iloc[:, 1].mean()
+#     center_y = non_outliers_data_label_0.iloc[:, 2].mean()
     
     # Plot the results
     plt.figure(figsize=(10, 7))
@@ -427,82 +458,82 @@ def main():
         os.mkdir(targeting_result_dir)
         
     ## Load data    
-#     metabolic_task_file = pkg_resources.resource_filename('tf_metabolism', 'data/MetabolicTasks.csv')
-#     medium_file = pkg_resources.resource_filename('tf_metabolism', 'data/RPMI1640_medium.txt')
-#     present_metabolite_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_metabolites.txt')
-#     essential_reaction_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_reactions.txt')
-#     trrust = pkg_resources.resource_filename('tf_metabolism', 'data/TRRUST_v2_ensembl.tsv')
+    metabolic_task_file = pkg_resources.resource_filename('tf_metabolism', 'data/MetabolicTasks.csv')
+    medium_file = pkg_resources.resource_filename('tf_metabolism', 'data/RPMI1640_medium.txt')
+    present_metabolite_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_metabolites.txt')
+    essential_reaction_file = pkg_resources.resource_filename('tf_metabolism', 'data/essential_reactions.txt')
+    trrust = pkg_resources.resource_filename('tf_metabolism', 'data/TRRUST_v2_ensembl.tsv')
     
-#     # Check omics data format and choose proper metabolic model
-#     generic_model_file_name = utils.check_input_file_format(omics_file1, omics_file2)
-#     generic_model_file_name = pkg_resources.resource_filename('tf_metabolism', 'data/Recon2M.2_Entrez_Gene.xml')
-#     generic_model_file = generic_model_file_name
-#     universal_model_file = generic_model_file_name
+    # Check omics data format and choose proper metabolic model
+    generic_model_file_name = utils.check_input_file_format(omics_file1, omics_file2)
+    generic_model_file_name = pkg_resources.resource_filename('tf_metabolism', 'data/Recon2M.2_Entrez_Gene.xml')
+    generic_model_file = generic_model_file_name
+    universal_model_file = generic_model_file_name
     
-#     biomass_reaction = 'biomass_reaction'
-#     cobra_model = read_sbml_model(generic_model_file)
+    biomass_reaction = 'biomass_reaction'
+    cobra_model = read_sbml_model(generic_model_file)
     
-#     # Find differentially expressed genes or transcripts
-#     omics1_df = pd.read_csv(omics_file1, index_col=0)
-#     omics2_df = pd.read_csv(omics_file2, index_col=0)
+    # Find differentially expressed genes or transcripts
+    omics1_df = pd.read_csv(omics_file1, index_col=0)
+    omics2_df = pd.read_csv(omics_file2, index_col=0)
     
-#     generic_cobra_model = read_sbml_model(generic_model_file)
-#     taget_genes = []
-#     for each_gene in generic_cobra_model.genes:
-#         taget_genes.append(int(each_gene.id))
+    generic_cobra_model = read_sbml_model(generic_model_file)
+    taget_genes = []
+    for each_gene in generic_cobra_model.genes:
+        taget_genes.append(int(each_gene.id))
     
-#     taget_genes = list(set(taget_genes)&set(omics1_df.index))
+    taget_genes = list(set(taget_genes)&set(omics1_df.index))
     
-#     omics1_df = omics1_df.loc[taget_genes]
-#     omics2_df = omics2_df.loc[taget_genes]
+    omics1_df = omics1_df.loc[taget_genes]
+    omics2_df = omics2_df.loc[taget_genes]
     
-#     target_genes_list1 = []
-#     target_genes_list2 = []
+    target_genes_list1 = []
+    target_genes_list2 = []
     
-#     for each_row, each_df in omics1_df.iterrows():
-#         min_exp = np.min(np.abs(each_df.values))
-#         if min_exp >= 0.5:
-#             target_genes_list1.append(int(each_row))
+    for each_row, each_df in omics1_df.iterrows():
+        min_exp = np.min(np.abs(each_df.values))
+        if min_exp >= 0.5:
+            target_genes_list1.append(int(each_row))
             
-#     for each_row, each_df in omics2_df.iterrows():
-#         min_exp = np.min(np.abs(each_df.values))
-#         if min_exp >= 0.5:
-#             target_genes_list2.append(int(each_row))
+    for each_row, each_df in omics2_df.iterrows():
+        min_exp = np.min(np.abs(each_df.values))
+        if min_exp >= 0.5:
+            target_genes_list2.append(int(each_row))
     
-#     target_genes2 = list(set(target_genes_list1) & set(target_genes_list2))
-#     omics1_df_tmp = omics1_df.loc[target_genes2]
-#     omics2_df_tmp = omics2_df.loc[target_genes2]
+    target_genes2 = list(set(target_genes_list1) & set(target_genes_list2))
+    omics1_df_tmp = omics1_df.loc[target_genes2]
+    omics2_df_tmp = omics2_df.loc[target_genes2]
 
-#     comparison_result_df = statistical_comparison.two_grouped_data_comparison(omics1_df_tmp, omics2_df_tmp, related_sample_flag, 0.05)
-#     comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
+    comparison_result_df = statistical_comparison.two_grouped_data_comparison(omics1_df_tmp, omics2_df_tmp, related_sample_flag, 0.05)
+    comparison_result_df.to_csv(output_dir+'/Differentially_expressed_genes.csv')
     
-# # Reconstruct GEMs
-#     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
-#     reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+# Reconstruct GEMs
+    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c1, omics_file1, present_metabolite_file, essential_reaction_file, metabolic_task_file)
+    reconstruct_GEM(biomass_reaction, generic_model_file, universal_model_file, medium_file, output_dir_c2, omics_file2, present_metabolite_file, essential_reaction_file, metabolic_task_file)
     
-#     ## Predict metabolix fluxes using each condition specific GEM
-#     output_dir_f1 = '%s/flux1'%(output_dir)
-#     output_dir_f2 = '%s/flux2'%(output_dir)
-#     predict_metabolic_fluxes(output_dir, output_dir_f1, output_dir_c1, generic_model_file)
-#     predict_metabolic_fluxes(output_dir, output_dir_f2, output_dir_c2, generic_model_file)
+    ## Predict metabolix fluxes using each condition specific GEM
+    output_dir_f1 = '%s/flux1'%(output_dir)
+    output_dir_f2 = '%s/flux2'%(output_dir)
+    predict_metabolic_fluxes(output_dir, output_dir_f1, output_dir_c1, generic_model_file)
+    predict_metabolic_fluxes(output_dir, output_dir_f2, output_dir_c2, generic_model_file)
     
-#     # ## Statistical analysis of metabolic flux
-#     flux_file1 = '%s/flux1.csv'%(output_dir)
-#     flux_file2 = '%s/flux2.csv'%(output_dir)
-#     flux1_df = pd.read_csv(flux_file1, index_col=0)
-#     flux2_df = pd.read_csv(flux_file2, index_col=0)
-#     comparison_result_df = statistical_comparison.two_grouped_data_comparison(flux1_df, flux2_df, related_sample_flag, 0.05)
-#     comparison_result_df.to_csv(output_dir+'/Differentially_changed_fluxes.csv')
+    # ## Statistical analysis of metabolic flux
+    flux_file1 = '%s/flux1.csv'%(output_dir)
+    flux_file2 = '%s/flux2.csv'%(output_dir)
+    flux1_df = pd.read_csv(flux_file1, index_col=0)
+    flux2_df = pd.read_csv(flux_file2, index_col=0)
+    comparison_result_df = statistical_comparison.two_grouped_data_comparison(flux1_df, flux2_df, related_sample_flag, 0.05)
+    comparison_result_df.to_csv(output_dir+'/Differentially_changed_fluxes.csv')
     
-#     # Perform enrichment analysis for metabolic pathways
-#     predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
+    # Perform enrichment analysis for metabolic pathways
+    predict_enriched_metabolic_pathways(output_dir, cobra_model, comparison_result_df)
     
-#     ## Calculate flux_sum
-#     result = flux_sum.calculate_flux_sum(cobra_model, flux_file1, flux_file2, related=related_sample_flag, p_value_cutoff=0.05)
-#     result.to_csv('%s/flux_sum_results.csv'%(output_dir))
+    ## Calculate flux_sum
+    result = flux_sum.calculate_flux_sum(cobra_model, flux_file1, flux_file2, related=related_sample_flag, p_value_cutoff=0.05)
+    result.to_csv('%s/flux_sum_results.csv'%(output_dir))
     
-#     run_targeting_simulation(output_dir, targeting_result_dir)
-    visualize_targeting_results(output_dir, output_viz_dir)
+    run_targeting_simulation(output_dir, targeting_result_dir)
+    visualize_targeting_results(cobra_model, output_dir, output_viz_dir)
     visualize_other_results(output_dir, output_viz_dir)
     
     logging.info(time.strftime("Elapsed time %H:%M:%S", time.gmtime(time.time() - start)))
