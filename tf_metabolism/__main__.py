@@ -318,11 +318,11 @@ def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
         # 기존 코드는 생략하고 직접적으로 수정이 필요한 부분만 나타냈습니다.
         fig, ax = plt.subplots(figsize=(10, 6))
 
-        ax.scatter(umap_result[labels == 0, 0], umap_result[labels == 0, 1], color='skyblue', label='Control', alpha=0.5)
+        ax.scatter(umap_result[labels == 0, 0], umap_result[labels == 0, 1], color='skyblue', alpha=0.5)
 
-        ax.scatter(center_x, center_y, color='green', label='Center (control)')
-        ax.scatter(tmp_result[:, 0], tmp_result[:, 1], color='gray', alpha=0.05, label='Predicted flux')
-        ax.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, label='Candidates', s=50)
+        ax.scatter(center_x, center_y, color='darkblue', marker='+')
+        ax.scatter(tmp_result[:, 0], tmp_result[:, 1], color='gray', alpha=0.05)
+        ax.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, s=50)
 
         texts = []  # 텍스트 객체를 저장할 리스트를 초기화합니다.
         for i in closest_indices:
@@ -331,7 +331,7 @@ def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
         ax.set_xlabel('UMAP_1')
         ax.set_ylabel('UMAP_2')
         ax.set_title('Simulation Results')
-        ax.legend()
+        # ax.legend()
 
         # 그래프를 저장하기 전에 그림을 그립니다. 이것은 모든 텍스트 객체들이 그림과 연결되어 있음을 보장합니다.
         plt.draw()
