@@ -322,7 +322,7 @@ def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
 
         ax.scatter(center_x, center_y, color='green', label='Center (control)')
         ax.scatter(tmp_result[:, 0], tmp_result[:, 1], color='gray', alpha=0.05, label='Predicted flux')
-        ax.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, label='Top 5 target genes', s=50)
+        ax.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, label='Candidates', s=50)
 
         texts = []  # 텍스트 객체를 저장할 리스트를 초기화합니다.
         for i in closest_indices:
