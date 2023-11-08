@@ -285,10 +285,9 @@ def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
     joblib.dump(umap_model, output_viz_dir+'/umap_model.pkl')
     loaded_umap_model = joblib.load(output_viz_dir+'/umap_model.pkl')
     
-    # 중심값 계산
-    center_x = np.mean(umap_result[:, 0])
-    center_y = np.mean(umap_result[:, 1])
-    
+    center_x = np.median(umap_result_df[umap_result_df['label']==0][0].values)
+    center_y = np.median(umap_result_df[umap_result_df['label']==0][1].values)
+
     targeting_result_files = glob.glob(output_dir+'/targeting_results/*.csv')
     fp = open(output_viz_dir+'/target_genes.csv', 'w')
     fp.write('%s,%s\n' % ('Gene', 'Sample'))
@@ -314,7 +313,7 @@ def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
 #         tmp_df.to_csv(umap_csv_filename)
 
         distances = np.sqrt((tmp_df['X'] - center_x)**2 + (tmp_df['Y'] - center_y)**2)
-        closest_indices = np.argsort(distances)[:5]
+        closest_indices = np.argsort(distances)[:10]
 
         # 기존 코드는 생략하고 직접적으로 수정이 필요한 부분만 나타냈습니다.
         fig, ax = plt.subplots(figsize=(10, 6))
