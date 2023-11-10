@@ -299,15 +299,20 @@ def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
     texts = []  # Initialize a list to hold the text objects for adjust_text
 
     for each_result in targeting_result_files:
-        basename = os.path.basename(each_result).split('.')[0].strip()
+        basename = os.path.basename(each_result).split('.')[0].strip()        
         df2 = pd.read_csv(each_result, index_col=0)
         df2 = df2.loc[target_reactions].T
         umap_result_sim = loaded_umap_model.transform(df2)
-
+        sample_name = basename.replace('MOMA_target_results_','')
+        
+        sample_data = umap_result_df.loc[[sample_name]]
+        sample_x = sample_data[0]
+        sample_y = sample_data[1]
+        
         tmp_df = df2
         tmp_result = loaded_umap_model.transform(tmp_df)
         tmp_df = pd.DataFrame(tmp_result, columns=['X', 'Y'], index=tmp_df.index)
-
+        
 #         # Save UMAP results to a CSV file
 #         umap_csv_filename = output_viz_dir + '/UMAP_Results_' + basename + '.csv'
 #         tmp_df.to_csv(umap_csv_filename)
@@ -320,7 +325,8 @@ def visualize_targeting_results(cobra_model, output_dir, output_viz_dir):
 
         ax.scatter(umap_result[labels == 0, 0], umap_result[labels == 0, 1], color='skyblue', alpha=0.5)
 
-        ax.scatter(center_x, center_y, color='darkblue', marker='+')
+        ax.scatter(sample_x, sample_y, color='green', marker='+')
+        ax.scatter(center_x, center_y, color='blue', marker='+')
         ax.scatter(tmp_result[:, 0], tmp_result[:, 1], color='gray', alpha=0.05)
         ax.scatter(tmp_result[closest_indices, 0], tmp_result[closest_indices, 1], color='red', alpha=0.5, s=50)
 
